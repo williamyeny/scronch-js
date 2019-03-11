@@ -24,6 +24,8 @@ document.getElementById("file-select").addEventListener("change", function(e) {
       // new image
       var renderImage = rCtx.createImageData(img.width, img.height)
       var pixels = renderImage.data
+      // edge matrix
+      var eMatrix = []
 
       console.log(pixels.length)
       console.log(pixelsRaw.length)
@@ -43,6 +45,10 @@ document.getElementById("file-select").addEventListener("change", function(e) {
           continue
         }
 
+        if (eMatrix.length - 1 < y) {
+          eMatrix.push([])
+        }
+
         var magX = 0.0
         var magY = 0.0
         // loop through 3x3 area around pixel
@@ -58,14 +64,15 @@ document.getElementById("file-select").addEventListener("change", function(e) {
           }
         }
         var mag = Math.sqrt(magX*magX + magY*magY)
-        pixels[i] = mag
-        pixels[i+1] = mag
-        pixels[i+2] = mag
-        pixels[i+3] = 255
+        // pixels[i] = mag
+        // pixels[i+1] = mag
+        // pixels[i+2] = mag
+        // pixels[i+3] = 255
+        eMatrix[y][x] = mag
         
       }
-      console.log(pixels)
-      rCtx.putImageData(renderImage, 0, 0)
+      console.log(eMatrix)
+      // rCtx.putImageData(renderImage, 0, 0)
     }
     img.src = event.target.result
   }
