@@ -22,8 +22,11 @@ document.getElementById("file-select").addEventListener("change", function(e) {
       var pixelsRaw = rCtx.getImageData(0, 0, img.width, img.height).data
 
       // new image
-      var renderImage = rCtx.createImageData(rCanvas.width, rCanvas.height)
+      var renderImage = rCtx.createImageData(img.width, img.height)
       var pixels = renderImage.data
+
+      console.log(pixels.length)
+      console.log(pixelsRaw.length)
 
       // defining the sobel convolution matrices...
       var kx = [[-1, 0, 1],[-2, 0, 2],[-1, 0, 1]];
@@ -33,7 +36,7 @@ document.getElementById("file-select").addEventListener("change", function(e) {
       for (i = 0; i < pixelsRaw.length; i += 4) {
         // get x/y dimensions of pixel
         var x = i/4 % img.width
-        var y = Math.floor(i/4 / img.height)
+        var y = Math.floor(i/4 / img.width)
 
         // ignore edge pixels since Sobel's requires a 3x3 block around pixel
         if (x == 0 || y == 0 || x == img.width-1 || y == img.height-1) {
@@ -54,13 +57,14 @@ document.getElementById("file-select").addEventListener("change", function(e) {
             magY += brightness * ky[a][b]
           }
         }
-        var mag = magX*magX + magY*magY
-        pixels[i] = Math.sqrt(mag)
-        pixels[i+1] = Math.sqrt(mag)
-        pixels[i+2] = Math.sqrt(mag)
+        var mag = Math.sqrt(magX*magX + magY*magY)
+        pixels[i] = mag
+        pixels[i+1] = mag
+        pixels[i+2] = mag
         pixels[i+3] = 255
         
       }
+      console.log(pixels)
       rCtx.putImageData(renderImage, 0, 0)
     }
     img.src = event.target.result
