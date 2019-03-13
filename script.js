@@ -17,54 +17,13 @@ document.getElementById("file-select").addEventListener("change", function(e) {
       pCanvas.width = pCanvas.offsetWidth
       pCanvas.height = pCanvas.width / (img.width / img.height)
       pCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, pCanvas.width, pCanvas.height)
-            
-      // grab raw pixels
-      var pixelsRaw = rCtx.getImageData(0, 0, img.width, img.height).data
+
+      // generate edge matrix from original image
+      var eMatrix = genEMatrix(rCtx.getImageData(0, 0, img.width, img.height))
 
       // new image
       var renderImage = rCtx.createImageData(img.width, img.height)
       var pixels = renderImage.data
-      // edge matrix
-      var eMatrix = []
-      
-      // defining the sobel convolution matrices...
-      var kx = [[-1, 0, 1],[-2, 0, 2],[-1, 0, 1]];
-      var ky = [[-1, -2, -1],[0,  0,  0],[1,  2,  1]];
-
-      // loop through pixels (format: [r1, g1, b1, a1, r2, g2, b2, a2, ...])
-      for (i = 0; i < pixelsRaw.length; i += 4) {
-        // get x/y dimensions of pixel
-        var x = i/4 % img.width
-        var y = Math.floor(i/4 / img.width)
-
-        // ignore edge pixels since Sobel's requires a 3x3 block around pixel
-        if (x == 0 || y == 0 || x == img.width-1 || y == img.height-1) {
-          continue
-        } // (note: this will produce a matrix that is -2 width and -2 height)
-        x--
-        y--
-
-        if (eMatrix.length - 1 < y) {
-          eMatrix.push([])
-        }
-
-        var magX = 0.0
-        var magY = 0.0
-        // loop through 3x3 area around pixel
-        for(a = 0; a < 3; a++) {
-          for(b = 0; b < 3; b++) {            
-            var index = ((x + a) + (y + b) * img.width) * 4;
-
-            // Y = 0.299 * R + 0.587 * G + 0.114 * B
-            var brightness =  0.299 * pixelsRaw[index] + 0.587 * pixelsRaw[index+1] + 0.114 * pixelsRaw[index+2]
-
-            magX += brightness * kx[a][b]
-            magY += brightness * ky[a][b]
-          }
-        }
-        var mag = Math.sqrt(magX*magX + magY*magY)
-        eMatrix[y][x] = mag
-      }
 
       // dp table: element i is an array for the path from pixel i that has [0] = total energy cost for said path, [1 ... n] = the actual path
       var paths = []
@@ -114,4 +73,49 @@ document.getElementById("file-select").addEventListener("change", function(e) {
 
 function arrToImg(arr) {
 
+}
+
+function genEMatrix(img) {
+  var eMatrix = []
+  var pixelsRaw = img.data
+  
+  // defining the sobel convolution matrices...
+  var kx = [[-1, 0, 1],[-2, 0, 2],[-1, 0, 1]];
+  var ky = [[-1, -2, -1],[0,  0,  0],[1,  2,  1]];
+
+  // loop through pixels (format: [r1, g1, b1, a1, r2, g2, b2, a2, ...])
+  for (i = 0; i < pixelsRaw.length; i += 4) {
+    // get x/y dimensions of pixel
+    var x = i/4 % img.width
+    var y = Math.floor(i/4 / img.width)
+
+    // ignore edge pixels since Sobel's requires a 3x3 block around pixel
+    if (x == 0 || y == 0 || x == img.width-1 || y == img.height-1) {
+      continue
+    } // (note: this will produce a matrix that is -2 width and -2 height)
+    x--
+    y--
+
+    if (eMatrix.length - 1 < y) {
+      eMatrix.push([])
+    }
+
+    var magX = 0.0
+    var magY = 0.0
+    // loop through 3x3 area around pixel
+    for(a = 0; a < 3; a++) {
+      for(b = 0; b < 3; b++) {            
+        var index = ((x + a) + (y + b) * img.width) * 4;
+
+        // Y = 0.299 * R + 0.587 * G + 0.114 * B
+        var brightness =  0.299 * pixelsRaw[index] + 0.587 * pixelsRaw[index+1] + 0.114 * pixelsRaw[index+2]
+
+        magX += brightness * kx[a][b]
+        magY += brightness * ky[a][b]
+      }
+    }
+    eMatrix[y][x] = Math.sqrt(magX*magX + magY*magY)
+  }
+
+  return eMatrix
 }
